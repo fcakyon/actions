@@ -75,12 +75,12 @@ runs:
       #   python -m pip install --upgrade pip wheel
       #   pip install -q git+https://github.com/fcakyon/actions@main codespell tomli
       run: |
-        packages="ultralytics-actions"
+        packages="safevideo-actions"
         if [ "${{ inputs.spelling }}" = "true" ]; then
           packages="$packages codespell tomli"
         fi
         pip install -q $packages
-        ultralytics-actions-info
+        safevideo-actions-info
       shell: bash
 
     # Checkout Repository ----------------------------------------------------------------------------------------------
@@ -101,7 +101,7 @@ runs:
         OPENAI_API_KEY: ${{ inputs.openai_api_key }}
         OPENAI_MODEL: ${{ inputs.openai_model }}
       run: |
-        ultralytics-actions-summarize-pr
+        safevideo-actions-summarize-pr
       shell: bash
       continue-on-error: true
 
