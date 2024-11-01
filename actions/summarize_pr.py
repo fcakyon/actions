@@ -15,7 +15,7 @@ from .utils import (
 
 # Action settings
 SUMMARY_START = (
-    "## 🛠️ PR Summary\n\n<sub>Made with ❤️ by [Ultralytics Actions](https://github.com/ultralytics/actions)<sub>\n\n"
+    "## 🛠️ PR Summary\n\n<sub>Made with ❤️ by [SafeVideo Actions](https://github.com/fcakyon/actions)<sub>\n\n"
 )
 
 
