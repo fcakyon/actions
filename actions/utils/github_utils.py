@@ -98,7 +98,7 @@ def check_pypi_version(pyproject_toml="pyproject.toml"):
     return local_version, online_version, publish
 
 
-def ultralytics_actions_info():
+def safevideo_actions_info():
     """Print Ultralytics Actions information."""
     info = {
         "github.event_name": GITHUB_EVENT_NAME,
