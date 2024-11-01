@@ -1,7 +1,7 @@
 # Ultralytics Actions 🚀, AGPL-3.0 License https://ultralytics.com/license
 
-name: "Ultralytics Actions"
-author: "Ultralytics"
+name: "SafeVideo Actions"
+author: "SafeVideo"
 description: "Optimize code and docs with official Ultralytics Actions for syntax, spelling, and link checks."
 branding:
   icon: "code"
@@ -42,8 +42,11 @@ inputs:
     description: "Run PR Summary"
     required: false
     default: "false"
-  openai_api_key:
-    description: "OpenAI API Key"
+  openai_azure_api_key:
+    description: "OpenAI Azure API Key"
+    required: false
+  openai_azure_endpoint:
+    description: "OpenAI Azure Endpoint"
     required: false
   openai_model:
     description: "OpenAI Model"
@@ -58,11 +61,11 @@ inputs:
   github_username:
     description: "GitHub username for commits"
     required: false
-    default: "UltralyticsAssistant"
+    default: "SafeVideoAsssitant"
   github_email:
     description: "GitHub email for commits"
     required: false
-    default: "web@ultralytics.com"
+    default: "support@safevideo.com"
 runs:
   using: "composite"
   steps:
