@@ -16,7 +16,7 @@ from .github_utils import (
     get_github_data,
     get_pr_diff,
     graphql_request,
-    ultralytics_actions_info,
+    safevideo_actions_info,
 )
 from .openai_utils import OPENAI_API_KEY, OPENAI_MODEL, get_completion
 
