@@ -8,7 +8,8 @@ import requests
 
 from actions.utils.common_utils import check_links_in_string
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_AZURE_API_KEY = os.getenv("OPENAI_AZURE_API_KEY")
+OPENAI_AZURE_ENDPOINT = os.getenv("OPENAI_AZURE_ENDPOINT")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 
 
@@ -18,9 +19,16 @@ def get_completion(
     remove: List[str] = (" @giscus[bot]",),  # strings to remove from response
 ) -> str:
     """Generates a completion using OpenAI's API based on input messages."""
-    assert OPENAI_API_KEY, "OpenAI API key is required."
-    url = "https://api.openai.com/v1/chat/completions"
-    headers = {"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"}
+    assert OPENAI_AZURE_API_KEY, "OpenAI Azure API key is required."
+    assert OPENAI_AZURE_ENDPOINT, "OpenAI Azure endpoint is required."
+    
+    # Construct the API URL
+    url = f"{OPENAI_AZURE_ENDPOINT}/openai/deployments/{OPENAI_MODEL}/chat/completions?api-version=2024-06-01"
+
+    headers = {
+        "api-key": OPENAI_AZURE_API_KEY,
+        "Content-Type": "application/json"
+    }
 
     content = ""
     max_retries = 2
