@@ -67,7 +67,8 @@ To use this action in your Ultralytics repository:
              spelling: true # check spelling
              links: true # check broken links
              summary: true # print PR summary with GPT4o (requires 'openai_api_key')
-             openai_api_key: # your OpenAI API key
+             openai_azure_api_key: # your OpenAI Azure API key
+             openai_azure_endpoint: # your OpenAI Azure ENdpoint
    ```
 
 3. **Customize:** Adjust the workflow settings as necessary for your project.
