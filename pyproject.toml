@@ -23,9 +23,9 @@ requires = ["setuptools>=70.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ultralytics-actions"
+name = "safevideo-actions"
 dynamic = ["version"]
-description = "Ultralytics Actions for GitHub automation and PR management."
+description = "SafeVideo Actions for GitHub automation and PR management."
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "AGPL-3.0" }
@@ -42,10 +42,10 @@ keywords = [
     "continuous-integration"
 ]
 authors = [
-    { name = "Glenn Jocher", email = "glenn.jocher@ultralytics.com" },
+    { name = "safevideo", email = "support@safevideo.com" },
 ]
 maintainers = [
-    { name = "Ultralytics", email = "hello@ultralytics.com" },
+    { name = "SafeVideo AI", email = "support@safevideo.com" },
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -77,18 +77,17 @@ dev = [
 ]
 
 [project.urls]
-"Homepage" = "https://ultralytics.com"
-"Source" = "https://github.com/ultralytics/actions"
-"Documentation" = "https://docs.ultralytics.com"
-"Bug Reports" = "https://github.com/ultralytics/actions/issues"
-"Changelog" = "https://github.com/ultralytics/actions/releases"
+"Homepage" = "https://safevideo.ai"
+"Source" = "https://github.com/fcakyon/actions"
+"Bug Reports" = "https://github.com/fcakyon/actions/issues"
+"Changelog" = "https://github.com/fcakyon/actions/releases"
 
 [project.scripts]
-ultralytics-actions-first-interaction = "actions.first_interaction:main"
-ultralytics-actions-summarize-pr = "actions.summarize_pr:main"
-ultralytics-actions-summarize-release = "actions.summarize_release:main"
-ultralytics-actions-update-markdown-code-blocks = "actions.update_markdown_code_blocks:main"
-ultralytics-actions-info = "actions.utils:ultralytics_actions_info"
+safevideo-actions-first-interaction = "actions.first_interaction:main"
+safevideo-actions-summarize-pr = "actions.summarize_pr:main"
+safevideo-actions-summarize-release = "actions.summarize_release:main"
+safevideo-actions-update-markdown-code-blocks = "actions.update_markdown_code_blocks:main"
+safevideo-actions-info = "actions.utils:ultralytics_actions_info"
 
 [tool.setuptools]
 packages = { find = { where = ["."], include = ["actions", "actions.*"] } }
