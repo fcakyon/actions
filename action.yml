@@ -73,7 +73,7 @@ runs:
       # Note tomli required for codespell with pyproject.toml
       # For debug:
       #   python -m pip install --upgrade pip wheel
-      #   pip install -q git+https://github.com/ultralytics/actions@main codespell tomli
+      #   pip install -q git+https://github.com/fcakyon/actions@main codespell tomli
       run: |
         packages="ultralytics-actions"
         if [ "${{ inputs.spelling }}" = "true" ]; then
@@ -146,7 +146,7 @@ runs:
     - name: Run Prettier
       if: (github.event_name == 'pull_request' || github.event_name == 'pull_request_target') && (inputs.prettier == 'true' || inputs.markdown == 'true') && github.event.action != 'closed'
       run: |
-        ultralytics-actions-update-markdown-code-blocks
+        safevideo-actions-update-markdown-code-blocks
 
         npm install --global prettier
         # npx prettier --write "**/*.{js,jsx,ts,tsx,css,less,scss,json,md,mdx,yml,yaml,html,vue,svelte}"
@@ -198,7 +198,7 @@ runs:
         OPENAI_AZURE_ENDPOINT: ${{ inputs.openai_azure_endpoint }}
         OPENAI_MODEL: ${{ inputs.openai_model }}
       run: |
-        ultralytics-actions-first-interaction
+        safevideo-actions-first-interaction
       shell: bash
       continue-on-error: true
 
@@ -212,7 +212,7 @@ runs:
         git add .
         git reset HEAD -- .github/workflows/  # workflow changes are not permitted with default token
         if ! git diff --staged --quiet; then
-          git commit -m "Auto-format by https://ultralytics.com/actions"
+          git commit -m "Auto-format by https://github.com/fcakyon/actions"
           git push
         else
           echo "No changes to commit"
