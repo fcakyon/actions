@@ -211,8 +211,16 @@ def generate_unified_pr_response(event):
 
     # Remove mutually exclusive labels and inappropriate labels
     for label in {
-        "help wanted", "TODO", "research", "non-reproducible", "popular", "invalid", 
-        "Stale", "wontfix", "duplicate", "question"  # Remove question for PRs
+        "help wanted",
+        "TODO",
+        "research",
+        "non-reproducible",
+        "popular",
+        "invalid",
+        "Stale",
+        "wontfix",
+        "duplicate",
+        "question",  # Remove question for PRs
     }:
         label_descriptions.pop(label, None)
 
@@ -241,22 +249,22 @@ def generate_unified_pr_response(event):
                 "properties": {
                     "summary": {
                         "type": "string",
-                        "description": "PR summary with sections: ### 🌟 Summary, ### 📊 Key Changes, ### 🎯 Purpose & Impact"
+                        "description": "PR summary with sections: ### 🌟 Summary, ### 📊 Key Changes, ### 🎯 Purpose & Impact",
                     },
                     "labels": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "Array of 1-3 most relevant label names"
+                        "description": "Array of 1-3 most relevant label names",
                     },
                     "first_comment": {
-                        "type": "string", 
-                        "description": "Welcome comment for first-time PR with checklist and guidance"
-                    }
+                        "type": "string",
+                        "description": "Welcome comment for first-time PR with checklist and guidance",
+                    },
                 },
                 "required": ["summary", "labels", "first_comment"],
-                "additionalProperties": False
-            }
-        }
+                "additionalProperties": False,
+            },
+        },
     }
 
     org_name, repo_name = event.repository.split("/")
@@ -318,7 +326,7 @@ Respond with JSON containing summary, labels array, and first_comment."""
     except Exception as e:
         print(f"❌ Unified call failed ({e}), using individual functions")
         # Fallback to existing individual functions
-        from .first_interaction import get_relevant_labels, get_first_interaction_response
+        from .first_interaction import get_first_interaction_response, get_relevant_labels
 
         summary = generate_pr_summary(event.repository, diff)
         labels = get_relevant_labels(
@@ -339,34 +347,37 @@ def main(*args, **kwargs):
     print(f"Retrieving diff for PR {event.pr['number']}")
     print(f"Event action: {event.event_data.get('action')}")  # DEBUG
     print(f"Event name: {event.event_name}")  # DEBUG
-    
+
     # For new PRs, use unified approach for summary, labeling, and first comment
     if event.event_data.get("action") in {"opened", "reopened"}:
         print("🚀 NEW PR DETECTED - Using unified approach...")  # Clear indicator
         summary, labels, comment = generate_unified_pr_response(event)
-        
+
         # Update PR description
         print("Updating PR description...")
         update_pr_description(event, summary)
-        
+
         # Apply labels if any were suggested
         if labels:
             print(f"Applying labels: {labels}")
             from .first_interaction import apply_labels
+
             apply_labels(event, event.pr["number"], event.pr.get("node_id"), labels, "pull request")
-            
+
             # Handle Alert label actions
             if "Alert" in labels and not event.is_org_member(event.pr["user"]["login"]):
-                from .first_interaction import update_issue_pr_content, close_issue_pr, lock_issue_pr
+                from .first_interaction import lock_issue_pr, update_issue_pr_content
+
                 update_issue_pr_content(event, event.pr["number"], event.pr.get("node_id"), "pull request")
                 lock_issue_pr(event, event.pr["number"], event.pr.get("node_id"), "pull request")
-        
+
         # Add first comment
         if comment:
             print("Adding welcome comment...")
             from .first_interaction import add_comment
+
             add_comment(event, event.pr["number"], event.pr.get("node_id"), comment, "pull request")
-    
+
     # For synchronize events (new commits), just update summary
     elif event.event_data.get("action") == "synchronize":
         print("📝 SYNC EVENT - Generating PR summary for updated PR...")
@@ -374,7 +385,7 @@ def main(*args, **kwargs):
         summary = generate_pr_summary(event.repository, diff)
         print("Updating PR description...")
         update_pr_description(event, summary)
-    
+
     # Fallback to old approach (this shouldn't happen for new PRs)
     else:
         print("⚠️ FALLBACK - Using old individual approach...")
@@ -386,12 +397,14 @@ def main(*args, **kwargs):
     # Update linked issues and post thank you message if merged
     if event.pr.get("merged"):
         print("PR is merged, labeling fixed issues...")
-        pr_credit = label_fixed_issues(event, summary if 'summary' in locals() else generate_pr_summary(event.repository, event.get_pr_diff()))
+        pr_credit = label_fixed_issues(
+            event, summary if "summary" in locals() else generate_pr_summary(event.repository, event.get_pr_diff())
+        )
         print("Removing TODO label from PR...")
         remove_pr_labels(event, labels=["TODO"])
         if pr_credit:
             print("Posting PR author thank you message...")
-            post_merge_message(event, summary if 'summary' in locals() else "", pr_credit)
+            post_merge_message(event, summary if "summary" in locals() else "", pr_credit)
 
 
 if __name__ == "__main__":
