@@ -307,7 +307,7 @@ Respond with JSON containing summary, labels array, and first_comment."""
 
         data = json.loads(response)
         summary = SUMMARY_START + data.get("summary", "")
-        labels = [l for l in data.get("labels", []) if l in label_descriptions]
+        labels = [label for label in data.get("labels", []) if label in label_descriptions]
         comment = data.get("first_comment", "")
 
         print("✅ Unified PR analysis completed successfully")
