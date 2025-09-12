@@ -78,11 +78,12 @@ def get_completion(
         r = requests.post(url, json=data, headers=headers)
         r.raise_for_status()
         content = r.json()["choices"][0]["message"]["content"].strip()
-        
+
         if response_format:
             # For JSON responses, apply remove operations per field
             try:
                 import json
+
                 parsed_data = json.loads(content)
                 for key, value in parsed_data.items():
                     if isinstance(value, str):
@@ -97,8 +98,10 @@ def get_completion(
             content = remove_outer_codeblocks(content)
             for x in remove:
                 content = content.replace(x, "")
-        
-        if not check_links or response_format or check_links_in_string(content):  # if no checks or checks are passing return response
+
+        if (
+            not check_links or response_format or check_links_in_string(content)
+        ):  # if no checks or checks are passing return response
             return content
 
         if attempt < max_retries:

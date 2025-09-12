@@ -114,7 +114,7 @@ runs:
         token: ${{ inputs.token }}
         ref: ${{ github.head_ref || github.ref }}
 
-  # PR Summary and Analysis -------------------------------------------------------------------------------------
+    # PR Summary and Analysis -------------------------------------------------------------------------------------
     - name: PR Summary and Analysis
       if: (github.event_name == 'pull_request' || github.event_name == 'pull_request_target') && inputs.summary == 'true' && github.event.action != 'synchronize'
       env:
