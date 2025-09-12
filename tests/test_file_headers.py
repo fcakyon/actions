@@ -119,7 +119,7 @@ def test_main_real_files():
     with patch("actions.update_file_headers.update_file", return_value=False):
         main()
         # Verify that update_file was called (indicates file processing occurred)
-        #assert mock_update.call_count > 0
+        # assert mock_update.call_count > 0
 
 
 def test_main_with_custom_header():
