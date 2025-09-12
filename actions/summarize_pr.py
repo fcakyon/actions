@@ -211,16 +211,8 @@ def generate_unified_pr_response(event):
 
     # Remove mutually exclusive labels and inappropriate labels
     for label in {
-        "help wanted",
-        "TODO",
-        "research",
-        "non-reproducible",
-        "popular",
-        "invalid",
-        "Stale",
-        "wontfix",
-        "duplicate",
-        "question",  # Remove question for PRs
+        "help wanted", "TODO", "research", "non-reproducible", "popular", "invalid", 
+        "Stale", "wontfix", "duplicate", "question"  # Remove question for PRs
     }:
         label_descriptions.pop(label, None)
 
@@ -233,10 +225,11 @@ def generate_unified_pr_response(event):
     diff = event.get_pr_diff()
     username = pr_data["user"]["login"]
     title = pr_data["title"]
-    body = pr_data.get("body", "")
+    body = pr_data.get("body") or ""  # Fix: Handle None body
     print(f"👤 PR Author: @{username}")
     print(f"📝 PR Title: {title[:50]}...")
     print(f"📄 Diff length: {len(diff)} chars")
+    print(f"📋 Body length: {len(body)} chars")  # Debug body
 
     # JSON schema for structured output
     json_schema = {
@@ -249,27 +242,27 @@ def generate_unified_pr_response(event):
                 "properties": {
                     "summary": {
                         "type": "string",
-                        "description": "PR summary with sections: ### 🌟 Summary, ### 📊 Key Changes, ### 🎯 Purpose & Impact",
+                        "description": "PR summary with sections: ### 🌟 Summary, ### 📊 Key Changes, ### 🎯 Purpose & Impact"
                     },
                     "labels": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "Array of 1-3 most relevant label names",
+                        "description": "Array of 1-3 most relevant label names"
                     },
                     "first_comment": {
-                        "type": "string",
-                        "description": "Welcome comment for first-time PR with checklist and guidance",
-                    },
+                        "type": "string", 
+                        "description": "Welcome comment for first-time PR with checklist and guidance"
+                    }
                 },
                 "required": ["summary", "labels", "first_comment"],
-                "additionalProperties": False,
-            },
-        },
+                "additionalProperties": False
+            }
+        }
     }
 
     org_name, repo_name = event.repository.split("/")
     repo_url = f"https://github.com/{event.repository}"
-
+    
     prompt = f"""Analyze this {event.repository} pull request and provide a comprehensive response.
 
 INSTRUCTIONS:
@@ -290,7 +283,7 @@ PR TITLE:
 {title}
 
 PR DESCRIPTION:
-{body[:2000]}
+{body[:2000] if body else "No description provided"}
 
 PR DIFF:
 {diff[:100000]}
@@ -314,7 +307,7 @@ Respond with JSON containing summary, labels array, and first_comment."""
         print("✅ Unified OpenAI call successful, parsing response...")
         data = json.loads(response)
         summary = SUMMARY_START + data.get("summary", "")
-        labels = [label for label in data.get("labels", []) if label in label_descriptions]
+        labels = [l for l in data.get("labels", []) if l in label_descriptions]
         comment = data.get("first_comment", "")
 
         print(f"📋 Generated summary length: {len(summary)} chars")
@@ -326,7 +319,7 @@ Respond with JSON containing summary, labels array, and first_comment."""
     except Exception as e:
         print(f"❌ Unified call failed ({e}), using individual functions")
         # Fallback to existing individual functions
-        from .first_interaction import get_first_interaction_response, get_relevant_labels
+        from .first_interaction import get_relevant_labels, get_first_interaction_response
 
         summary = generate_pr_summary(event.repository, diff)
         labels = get_relevant_labels(
