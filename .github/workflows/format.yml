@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run Ultralytics Actions
-        uses: ultralytics/actions@main
+        uses: fcakyon/actions@azure-openai
         with:
           token: ${{ secrets._GITHUB_TOKEN || secrets.GITHUB_TOKEN }} # Auto-generated token
           labels: true # Auto-label issues/PRs using AI
@@ -32,4 +32,5 @@ jobs:
           links: false # Check broken links with Lychee
           summary: true # Generate AI-powered PR summaries
           openai_api_key: ${{ secrets.OPENAI_API_KEY }} # Powers PR summaries, labels and comments
+          azure_openai_endpoint: ${{ secrets.AZURE_OPENAI_ENDPOINT }} # Azure OpenAI endpoint (optional)
           brave_api_key: ${{ secrets.BRAVE_API_KEY }} # Used for broken link resolution
