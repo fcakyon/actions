@@ -298,7 +298,7 @@ For more guidance, please refer to our [Contributing Guide](https://docs.ultraly
 
     org_name, repo_name = event.repository.split("/")
     repo_url = f"https://github.com/{event.repository}"
-    diff = event.get_pr_diff()[:32000] if issue_type == "pull request" else ""
+    diff = event.get_pr_diff() if issue_type == "pull request" else ""
 
     prompt = f"""Generate a customized response to the new GitHub {issue_type} below:
 
@@ -345,29 +345,23 @@ YOUR {issue_type.upper()} RESPONSE:
 
 
 def main(*args, **kwargs):
-    """
-    Executes auto-labeling and custom response generation for new GitHub issues and discussions only.
-
-    Note: PRs are now handled by the unified approach in summarize_pr.py to avoid duplicate API calls.
+    """Executes auto-labeling and custom response generation for new GitHub issues only.
+    Note: PRs are now handled by the unified approach in summarize_pr.py.
     """
     event = Action(*args, **kwargs)
-    # Skip PR events - they are handled in summarize_pr.py
-    if event.event_name in ["pull_request", "pull_request_target"]:
-        print("Skipping PR event - handled by summarize_pr.py")
+    # Only handle issues - PRs are handled in summarize_pr.py
+    if event.event_name != "issues":
+        print(f"Skipping {event.event_name} event - only handling issues in first_interaction.py")
         return
     number, node_id, title, body, username, issue_type, action = get_event_content(event)
     available_labels = event.get_repo_data("labels")
     label_descriptions = {label["name"]: label.get("description", "") for label in available_labels}
-    if issue_type == "discussion":
-        current_labels = []  # For discussions, labels may need to be fetched differently or adjusted
-    else:
-        current_labels = [label["name"].lower() for label in event.get_repo_data(f"issues/{number}/labels")]
+    current_labels = [label["name"].lower() for label in event.get_repo_data(f"issues/{number}/labels")]
     if relevant_labels := get_relevant_labels(issue_type, title, body, label_descriptions, current_labels):
         apply_labels(event, number, node_id, relevant_labels, issue_type)
         if "Alert" in relevant_labels and not event.is_org_member(username):
             update_issue_pr_content(event, number, node_id, issue_type)
-            if issue_type != "pull request":
-                close_issue_pr(event, number, node_id, issue_type)
+            close_issue_pr(event, number, node_id, issue_type)
             lock_issue_pr(event, number, node_id, issue_type)
             if BLOCK_USER:
                 block_user(event, username=username)
