@@ -212,8 +212,16 @@ def generate_unified_pr_response(event):
 
     # Remove mutually exclusive labels and inappropriate labels
     for label in {
-        "help wanted", "TODO", "research", "non-reproducible", "popular", "invalid", 
-        "Stale", "wontfix", "duplicate", "question"  # Remove question for PRs
+        "help wanted",
+        "TODO",
+        "research",
+        "non-reproducible",
+        "popular",
+        "invalid",
+        "Stale",
+        "wontfix",
+        "duplicate",
+        "question",  # Remove question for PRs
     }:
         label_descriptions.pop(label, None)
 
@@ -243,22 +251,22 @@ def generate_unified_pr_response(event):
                 "properties": {
                     "summary": {
                         "type": "string",
-                        "description": "PR summary with sections: ### 🌟 Summary, ### 📊 Key Changes, ### 🎯 Purpose & Impact"
+                        "description": "PR summary with sections: ### 🌟 Summary, ### 📊 Key Changes, ### 🎯 Purpose & Impact",
                     },
                     "labels": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "Array of 1-3 most relevant label names"
+                        "description": "Array of 1-3 most relevant label names",
                     },
                     "first_comment": {
-                        "type": "string", 
-                        "description": "Welcome comment for first-time PR with checklist and guidance"
-                    }
+                        "type": "string",
+                        "description": "Welcome comment for first-time PR with checklist and guidance",
+                    },
                 },
                 "required": ["summary", "labels", "first_comment"],
-                "additionalProperties": False
-            }
-        }
+                "additionalProperties": False,
+            },
+        },
     }
 
     org_name, repo_name = event.repository.split("/")
@@ -277,7 +285,7 @@ def generate_unified_pr_response(event):
 For more guidance, please refer to our [Contributing Guide](https://docs.ultralytics.com/help/contributing/). Don't hesitate to leave a comment if you have any questions. Thank you for contributing to Ultralytics! 🚀"""
 
     example_pr_response = os.getenv("FIRST_PR_RESPONSE") or pr_response
-    
+
     prompt = f"""Analyze this {event.repository} pull request and provide a comprehensive response.
 
 SUMMARY INSTRUCTIONS:
@@ -350,7 +358,7 @@ Respond with JSON containing summary, labels array, and first_comment."""
     except Exception as e:
         print(f"❌ Unified call failed ({e}), using individual functions")
         # Fallback to existing individual functions
-        from .first_interaction import get_relevant_labels, get_first_interaction_response
+        from .first_interaction import get_first_interaction_response, get_relevant_labels
 
         summary = generate_pr_summary(event.repository, diff)
         labels = get_relevant_labels(

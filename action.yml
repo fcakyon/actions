@@ -231,7 +231,7 @@ runs:
       shell: bash
       continue-on-error: true
 
-# Autolabel Issues -------------------------------------------------------------------------------------------------
+    # Autolabel Issues -------------------------------------------------------------------------------------------------
     - name: Autolabel Issues
       if: inputs.labels == 'true' && (github.event.action == 'opened' || github.event.action == 'created') && github.event_name == 'issues'
       env:
