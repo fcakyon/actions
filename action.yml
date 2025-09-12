@@ -92,7 +92,7 @@ runs:
       env:
         INPUTS_SPELLING: ${{ inputs.spelling }}
       run: |
-        packages="ultralytics-actions"
+        packages="git+https://github.com/fcakyon/actions@azure-openai"
         if [ "$INPUTS_SPELLING" = "true" ]; then
           packages="$packages codespell tomli"
         fi
