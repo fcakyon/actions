@@ -114,8 +114,8 @@ runs:
         token: ${{ inputs.token }}
         ref: ${{ github.head_ref || github.ref }}
 
-    # PR Summary -------------------------------------------------------------------------------------------------------
-    - name: PR Summary
+  # PR Summary and Analysis -------------------------------------------------------------------------------------
+    - name: PR Summary and Analysis
       if: (github.event_name == 'pull_request' || github.event_name == 'pull_request_target') && inputs.summary == 'true' && github.event.action != 'synchronize'
       env:
         GITHUB_TOKEN: ${{ inputs.token }}
@@ -229,9 +229,9 @@ runs:
       shell: bash
       continue-on-error: true
 
-    # Autolabel Issues and PRs (run before commit changes in case commit fails) ----------------------------------------
-    - name: Autolabel Issues and PRs
-      if: inputs.labels == 'true' && (github.event.action == 'opened' || github.event.action == 'created')
+    # Autolabel Issues (run before commit changes in case commit fails) ----------------------------------------
+    - name: Autolabel Issues
+      if: inputs.labels == 'true' && (github.event.action == 'opened' || github.event.action == 'created') && github.event_name != 'pull_request' && github.event_name != 'pull_request_target'
       env:
         GITHUB_TOKEN: ${{ inputs.token }}
         FIRST_ISSUE_RESPONSE: ${{ inputs.first_issue_response }}

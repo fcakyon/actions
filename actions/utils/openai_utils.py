@@ -41,6 +41,7 @@ def get_completion(
     remove: list[str] = (" @giscus[bot]",),  # strings to remove from response
     temperature: float = 1.0,  # note GPT-5 requires temperature=1.0
     reasoning_effort: str = None,  # reasoning effort for GPT-5 models: minimal, low, medium, high
+    response_format: dict = None,  # JSON schema response format for structured outputs
 ) -> str:
     """Generates a completion using OpenAI's API based on input messages."""
     assert OPENAI_API_KEY, "OpenAI API key is required."
@@ -70,13 +71,34 @@ def get_completion(
         if "gpt-5" in OPENAI_MODEL:
             data["reasoning_effort"] = reasoning_effort or "low"  # Default to low for GPT-5
 
+        # Add response_format for structured outputs
+        if response_format:
+            data["response_format"] = response_format
+
         r = requests.post(url, json=data, headers=headers)
         r.raise_for_status()
         content = r.json()["choices"][0]["message"]["content"].strip()
-        content = remove_outer_codeblocks(content)
-        for x in remove:
-            content = content.replace(x, "")
-        if not check_links or check_links_in_string(content):  # if no checks or checks are passing return response
+        
+        if response_format:
+            # For JSON responses, apply remove operations per field
+            try:
+                import json
+                parsed_data = json.loads(content)
+                for key, value in parsed_data.items():
+                    if isinstance(value, str):
+                        for x in remove:
+                            parsed_data[key] = value.replace(x, "")
+                            value = parsed_data[key]
+                content = json.dumps(parsed_data)
+            except json.JSONDecodeError:
+                # If JSON parsing fails, treat as regular text
+                pass
+        else:
+            content = remove_outer_codeblocks(content)
+            for x in remove:
+                content = content.replace(x, "")
+        
+        if not check_links or response_format or check_links_in_string(content):  # if no checks or checks are passing return response
             return content
 
         if attempt < max_retries:
@@ -85,8 +107,6 @@ def get_completion(
             print("Max retries reached. Updating prompt to exclude links.")
             messages.append({"role": "user", "content": "Please provide a response without any URLs or links in it."})
             check_links = False  # automatically accept the last message
-
-    return content
 
 
 if __name__ == "__main__":
