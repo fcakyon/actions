@@ -11,18 +11,22 @@ BLOCK_USER = os.getenv("BLOCK_USER", "false").lower() == "true"
 
 
 def get_event_content(event) -> tuple[int, str, str, str, str, str, str]:
-    """Extracts key information from GitHub event data for issues or discussions only."""
+    """Extracts key information from GitHub event data for issues, pull requests, or discussions."""
     data = event.event_data
     name = event.event_name
     action = data["action"]  # 'opened', 'closed', 'created' (discussion), etc.
     if name == "issues":
         item = data["issue"]
         issue_type = "issue"
+    elif name in ["pull_request", "pull_request_target"]:
+        pr_number = data["pull_request"]["number"]
+        item = event.get_repo_data(f"pulls/{pr_number}")
+        issue_type = "pull request"
     elif name == "discussion":
         item = data["discussion"]
         issue_type = "discussion"
     else:
-        raise ValueError(f"Unsupported event type for first_interaction: {name}")
+        raise ValueError(f"Unsupported event type: {name}")
 
     number = item["number"]
     node_id = item.get("node_id") or item.get("id")
@@ -346,19 +350,24 @@ YOUR {issue_type.upper()} RESPONSE:
 
 def main(*args, **kwargs):
     """
-    Executes auto-labeling and custom response generation for new GitHub issues only.
+    Executes auto-labeling and custom response generation for new GitHub issues and discussions only.
 
-    Note: PRs are now handled by the unified approach in summarize_pr.py.
+    Note: PRs are now handled by the unified approach in summarize_pr.py to avoid duplicate API calls.
     """
     event = Action(*args, **kwargs)
-    # Only handle issues - PRs are handled in summarize_pr.py
-    if event.event_name != "issues":
-        print(f"Skipping {event.event_name} event - only handling issues in first_interaction.py")
-        return
     number, node_id, title, body, username, issue_type, action = get_event_content(event)
+
+    # Skip PRs as they are now handled by the unified approach in summarize_pr.py
+    if issue_type == "pull request":
+        print("Skipping PR - handled by unified approach in summarize_pr.py")
+        return
+
     available_labels = event.get_repo_data("labels")
     label_descriptions = {label["name"]: label.get("description", "") for label in available_labels}
-    current_labels = [label["name"].lower() for label in event.get_repo_data(f"issues/{number}/labels")]
+    if issue_type == "discussion":
+        current_labels = []  # For discussions, labels may need to be fetched differently or adjusted
+    else:
+        current_labels = [label["name"].lower() for label in event.get_repo_data(f"issues/{number}/labels")]
     if relevant_labels := get_relevant_labels(issue_type, title, body, label_descriptions, current_labels):
         apply_labels(event, number, node_id, relevant_labels, issue_type)
         if "Alert" in relevant_labels and not event.is_org_member(username):
