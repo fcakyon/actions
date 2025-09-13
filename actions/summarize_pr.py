@@ -255,11 +255,11 @@ def generate_unified_pr_response(event):
                     "labels": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "Array of 1-3 most relevant label names",
+                        "description": "Array of most relevant label names",
                     },
                     "first_comment": {
                         "type": "string",
-                        "description": "Welcome comment for first-time PR with checklist and guidance",
+                        "description": "Welcome comment for first-time PR with checklist and guidance + PR-specific notes for {PR name}",
                     },
                 },
                 "required": ["summary", "labels", "first_comment"],
@@ -292,7 +292,7 @@ SUMMARY INSTRUCTIONS:
 - Format with sections: ### 🌟 Summary, ### 📊 Key Changes, ### 🎯 Purpose & Impact
 
 LABELS INSTRUCTIONS:
-- Select 1-3 most relevant labels from available options
+- Select most relevant labels from available options
 - Only use "Alert" for obvious spam/abuse content
 
 FIRST COMMENT INSTRUCTIONS:
