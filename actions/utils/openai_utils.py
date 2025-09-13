@@ -60,7 +60,7 @@ def get_completion(
 
     content = ""
     max_retries = 2
-    for attempt in range(max_retries + 1):  # attempt = [0, 1, 2]
+    for attempt in range(max_retries + 1):  # attempt = [0, 1, 2] 2 random retries before asking for no links
         data = {
             "model": OPENAI_MODEL,
             "messages": messages,

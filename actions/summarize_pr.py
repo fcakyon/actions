@@ -6,7 +6,7 @@ import json
 import os
 import time
 
-from .first_interaction import add_comment, get_first_interaction_response, get_relevant_labels
+from .first_interaction import add_comment, apply_labels, get_first_interaction_response, get_relevant_labels
 from .utils import GITHUB_API_URL, GITHUB_GRAPHQL_URL, MAX_PR_CHARACTERS, Action, get_completion
 
 # Constants
@@ -234,10 +234,6 @@ def generate_unified_pr_response(event):
     username = pr_data["user"]["login"]
     title = pr_data["title"]
     body = pr_data.get("body") or ""  # Fix: Handle None body
-    print(f"👤 PR Author: @{username}")
-    print(f"📝 PR Title: {title[:50]}...")
-    print(f"📄 Diff length: {len(diff)} chars")
-    print(f"📋 Body length: {len(body)} chars")  # Debug body
 
     # JSON schema for structured output
     json_schema = {
@@ -336,7 +332,6 @@ PR DIFF:
 Respond with JSON containing summary, labels array, and first_comment."""
 
     try:
-        print("🤖 Making unified OpenAI API call...")
         response = get_completion(
             messages=[
                 {
@@ -348,21 +343,14 @@ Respond with JSON containing summary, labels array, and first_comment."""
             response_format=json_schema,
             check_links=False,  # Skip link checking for JSON responses
         )
-
-        print("✅ Unified OpenAI call successful, parsing response...")
         data = json.loads(response)
         summary = SUMMARY_START + data.get("summary", "")
         labels = [label for label in data.get("labels", []) if label in label_descriptions]
         comment = data.get("first_comment", "")
-
-        print(f"📋 Generated summary length: {len(summary)} chars")
-        print(f"🏷️ Suggested labels: {labels}")
-        print(f"💬 Comment length: {len(comment)} chars")
-        print("✅ Unified PR analysis completed successfully")
         return summary, labels, comment
 
     except Exception as e:
-        print(f"❌ Unified call failed ({e}), using individual functions")
+        print(f"Unified call failed ({e}), using individual functions")
         # Fallback to existing individual functions
 
         summary = generate_pr_summary(event.repository, diff)
@@ -382,29 +370,16 @@ def main(*args, **kwargs):
     event = Action(*args, **kwargs)
     action = event.event_data.get("action", "")
 
-    print(f"Retrieving diff for PR {event.pr['number']}")
-    print(f"Event action: {action}")  # DEBUG
-    print(f"Event name: {event.event_name}")  # DEBUG
-
     # Unified approach for opened PRs (summary + labels + comment)
     print(f"Processing PR {event.pr['number']} with action: {action}")
     if action in {"opened", "reopened"}:
         summary, labels, first_comment = generate_unified_pr_response(event)
 
-        # Update PR description
-        print("Updating PR description...")
+        # Apply all results
         update_pr_description(event, summary)
-
-        # Apply labels if any were suggested
         if labels:
-            print(f"Applying labels: {labels}")
-            from .first_interaction import apply_labels
-
             apply_labels(event, event.pr["number"], event.pr.get("node_id"), labels, "pull request")
-
-        # Add first comment
         if first_comment:
-            print("Adding welcome comment...")
             add_comment(event, event.pr["number"], event.pr.get("node_id"), first_comment, "pull request")
 
     # Other actions
