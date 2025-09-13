@@ -79,6 +79,10 @@ inputs:
     required: false
     default: "web@ultralytics.com"
     # default: "41898282+github-actions[bot]@users.noreply.github.com"
+  block_user:
+    description: "Block users when spam/abuse is detected"
+    required: false
+    default: "false"
 runs:
   using: "composite"
   steps:
@@ -125,6 +129,7 @@ runs:
         AZURE_OPENAI_ENDPOINT: ${{ inputs.azure_openai_endpoint }}
         FIRST_ISSUE_RESPONSE: ${{ inputs.first_issue_response }}
         FIRST_PR_RESPONSE: ${{ inputs.first_pr_response }}
+        BLOCK_USER: ${{ inputs.block_user }}
       run: |
         ultralytics-actions-summarize-pr
       shell: bash

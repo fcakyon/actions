@@ -7,7 +7,7 @@ import os
 import time
 
 from .first_interaction import add_comment, get_first_interaction_response, get_relevant_labels
-from .utils import GITHUB_API_URL, GITHUB_GRAPHQL_URL, Action, get_completion
+from .utils import GITHUB_API_URL, GITHUB_GRAPHQL_URL, MAX_PR_CHARACTERS, Action, get_completion
 
 # Constants
 SUMMARY_START = (
@@ -93,7 +93,7 @@ def generate_pr_summary(repository, diff_text):
         },
     ]
     reply = get_completion(messages, temperature=1.0)
-    if len(diff_text) == 90000:
+    if len(diff_text) == MAX_PR_CHARACTERS:
         reply = "**WARNING ⚠️** this PR is very large, summary may not cover all changes.\n\n" + reply
     return SUMMARY_START + reply
 
