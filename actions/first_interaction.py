@@ -300,7 +300,7 @@ For more guidance, please refer to our [Contributing Guide](https://docs.ultraly
     repo_url = f"https://github.com/{event.repository}"
     diff = event.get_pr_diff() if issue_type == "pull request" else ""
 
-    prompt = f"""Generate a customized response to the new GitHub {issue_type} below:
+    prompt = f"""Generate a <customized> response to the new GitHub {issue_type} below:
 
 CONTEXT:
 - Repository: {repo_name}
@@ -312,7 +312,7 @@ INSTRUCTIONS:
 - Do not answer the question or resolve the issue directly
 - Adapt the example {issue_type} response below as appropriate, keeping all badges, links and references provided
 - For bug reports, specifically request a minimum reproducible example (MRE) if not provided
-- INCLUDE ALL LINKS AND INSTRUCTIONS IN THE EXAMPLE BELOW, customized as appropriate
+- INCLUDE ALL LINKS AND INSTRUCTIONS IN THE EXAMPLE BELOW, <customized> as appropriate
 - Mention to the user that this is an automated response and that an Ultralytics engineer will also assist soon
 - Do not add a sign-off or valediction like "best regards" at the end of your response
 - Do not add spaces between bullet points or numbered lists
