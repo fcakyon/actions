@@ -6,6 +6,7 @@ import json
 import os
 import time
 
+from .first_interaction import add_comment, get_first_interaction_response, get_relevant_labels
 from .utils import GITHUB_API_URL, GITHUB_GRAPHQL_URL, Action, get_completion
 
 # Constants
@@ -77,8 +78,6 @@ def generate_pr_summary(repository, diff_text):
     """Generates a concise, professional summary of a PR using OpenAI's API for Ultralytics repositories."""
     if not diff_text:
         diff_text = "**ERROR: DIFF IS EMPTY, THERE ARE ZERO CODE CHANGES IN THIS PR."
-    ratio = 3.3  # about 3.3 characters per token
-    limit = round(128000 * ratio * 0.5)  # use up to 50% of the 128k context window for prompt
     messages = [
         {
             "role": "system",
@@ -90,11 +89,11 @@ def generate_pr_summary(repository, diff_text):
             f"### 🌟 Summary (single-line synopsis)\n"
             f"### 📊 Key Changes (bullet points highlighting any major changes)\n"
             f"### 🎯 Purpose & Impact (bullet points explaining any benefits and potential impact to users)\n"
-            f"\n\nHere's the PR diff:\n\n{diff_text[:limit]}",
+            f"\n\nHere's the PR diff:\n\n{diff_text}",
         },
     ]
     reply = get_completion(messages, temperature=1.0)
-    if len(diff_text) > limit:
+    if len(diff_text) == 90000:
         reply = "**WARNING ⚠️** this PR is very large, summary may not cover all changes.\n\n" + reply
     return SUMMARY_START + reply
 
@@ -358,7 +357,6 @@ Respond with JSON containing summary, labels array, and first_comment."""
     except Exception as e:
         print(f"❌ Unified call failed ({e}), using individual functions")
         # Fallback to existing individual functions
-        from .first_interaction import get_first_interaction_response, get_relevant_labels
 
         summary = generate_pr_summary(event.repository, diff)
         labels = get_relevant_labels(
@@ -375,15 +373,16 @@ Respond with JSON containing summary, labels array, and first_comment."""
 def main(*args, **kwargs):
     """Summarize and label a PR and respond to the author."""
     event = Action(*args, **kwargs)
+    action = event.event_data.get("action", "")
 
     print(f"Retrieving diff for PR {event.pr['number']}")
-    print(f"Event action: {event.event_data.get('action')}")  # DEBUG
+    print(f"Event action: {action}")  # DEBUG
     print(f"Event name: {event.event_name}")  # DEBUG
 
-    # For new PRs, use unified approach for summary, labeling, and first comment
-    if event.event_data.get("action") in {"opened", "reopened"}:
-        print("🚀 NEW PR DETECTED - Using unified approach...")  # Clear indicator
-        summary, labels, comment = generate_unified_pr_response(event)
+    # Unified approach for opened PRs (summary + labels + comment)
+    print(f"Processing PR {event.pr['number']} with action: {action}")
+    if action in {"opened", "reopened"}:
+        summary, labels, first_comment = generate_unified_pr_response(event)
 
         # Update PR description
         print("Updating PR description...")
@@ -396,31 +395,14 @@ def main(*args, **kwargs):
 
             apply_labels(event, event.pr["number"], event.pr.get("node_id"), labels, "pull request")
 
-            # Handle Alert label actions
-            if "Alert" in labels and not event.is_org_member(event.pr["user"]["login"]):
-                from .first_interaction import lock_issue_pr, update_issue_pr_content
-
-                update_issue_pr_content(event, event.pr["number"], event.pr.get("node_id"), "pull request")
-                lock_issue_pr(event, event.pr["number"], event.pr.get("node_id"), "pull request")
-
         # Add first comment
-        if comment:
+        if first_comment:
             print("Adding welcome comment...")
-            from .first_interaction import add_comment
+            add_comment(event, event.pr["number"], event.pr.get("node_id"), first_comment, "pull request")
 
-            add_comment(event, event.pr["number"], event.pr.get("node_id"), comment, "pull request")
-
-    # For synchronize events (new commits), just update summary
-    elif event.event_data.get("action") == "synchronize":
-        print("📝 SYNC EVENT - Generating PR summary for updated PR...")
-        diff = event.get_pr_diff()
-        summary = generate_pr_summary(event.repository, diff)
-        print("Updating PR description...")
-        update_pr_description(event, summary)
-
-    # Fallback to old approach (this shouldn't happen for new PRs)
-    else:
-        print("⚠️ FALLBACK - Using old individual approach...")
+    # Other actions
+    elif action in ["synchronize", "edited"]:
+        print("Updating PR summary...")
         diff = event.get_pr_diff()
         summary = generate_pr_summary(event.repository, diff)
         print("Updating PR description...")
