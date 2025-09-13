@@ -85,7 +85,7 @@ def get_completion(
             try:
                 parsed_data = json.loads(content)
                 all_fields_pass = True
-                
+
                 for key, value in parsed_data.items():
                     if isinstance(value, str):
                         for x in remove:
@@ -94,7 +94,7 @@ def get_completion(
                         if check_links and not check_links_in_string(value):
                             all_fields_pass = False
                             break
-                
+
                 if all_fields_pass:
                     content = json.dumps(parsed_data)
                     return content
@@ -105,7 +105,7 @@ def get_completion(
                     print("Max retries reached for JSON response. Returning response with potential bad links.")
                     content = json.dumps(parsed_data)
                     return content
-                    
+
             except json.JSONDecodeError:
                 # If JSON parsing fails, treat as regular text
                 pass
