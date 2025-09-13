@@ -296,14 +296,21 @@ LABELS INSTRUCTIONS:
 - Only use "Alert" for obvious spam/abuse content
 
 FIRST COMMENT INSTRUCTIONS:
-- Do not answer the question or resolve the issue directly
-- Adapt the example PR response below as appropriate, keeping all badges, links and references provided
-- INCLUDE ALL LINKS AND INSTRUCTIONS IN THE EXAMPLE BELOW, customized as appropriate
-- Mention to the user that this is an automated response and that an Ultralytics engineer will also assist soon
-- Do not add a sign-off or valediction like "best regards" at the end of your response
-- Do not add spaces between bullet points or numbered lists
-- Only link to files or URLs in the example below, do not add external links
-- Use a few emojis to enliven your response
+- Start with the EXACT template provided below, including all badges, links and references
+- KEEP ALL CHECKLIST ITEMS AND LINKS UNCHANGED from the example
+- After the template, add a customized "PR-specific notes" section that addresses this specific PR:
+  - Analyze the PR diff and title to identify key changes and potential concerns
+  - Provide specific feedback on implementation approach, file changes, or testing needs
+  - Highlight any backward compatibility, configuration, or setup considerations
+  - Suggest specific improvements or verification steps relevant to this PR
+  - Use emojis to make the notes engaging and scannable
+- Format the PR-specific notes like:
+
+PR-specific notes for "{title}":
+- 🔧 [Specific technical feedback based on the actual changes]
+- 📝 [Documentation or setup considerations]
+- 🧪 [Testing recommendations]
+- 🔄 [Configuration or compatibility notes]
 
 AVAILABLE LABELS:
 {chr(10).join(f"- {name}: {desc}" for name, desc in label_descriptions.items())}

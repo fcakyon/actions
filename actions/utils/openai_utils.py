@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import time
 
@@ -59,7 +60,7 @@ def get_completion(
 
     content = ""
     max_retries = 2
-    for attempt in range(max_retries + 2):  # attempt = [0, 1, 2, 3], 2 random retries before asking for no links
+    for attempt in range(max_retries + 1):  # attempt = [0, 1, 2]
         data = {
             "model": OPENAI_MODEL,
             "messages": messages,
@@ -80,17 +81,31 @@ def get_completion(
         content = r.json()["choices"][0]["message"]["content"].strip()
 
         if response_format:
-            # For JSON responses, apply remove operations per field
+            # For JSON responses, apply remove operations per field and check links per field
             try:
-                import json
-
                 parsed_data = json.loads(content)
+                all_fields_pass = True
+                
                 for key, value in parsed_data.items():
                     if isinstance(value, str):
                         for x in remove:
-                            parsed_data[key] = value.replace(x, "")
-                            value = parsed_data[key]
-                content = json.dumps(parsed_data)
+                            value = value.replace(x, "")
+                            parsed_data[key] = value
+                        if check_links and not check_links_in_string(value):
+                            all_fields_pass = False
+                            break
+                
+                if all_fields_pass:
+                    content = json.dumps(parsed_data)
+                    return content
+                elif attempt < max_retries:
+                    print(f"Attempt {attempt + 1}: Found bad URLs in JSON fields. Retrying with a new random seed.")
+                    continue
+                else:
+                    print("Max retries reached for JSON response. Returning response with potential bad links.")
+                    content = json.dumps(parsed_data)
+                    return content
+                    
             except json.JSONDecodeError:
                 # If JSON parsing fails, treat as regular text
                 pass
@@ -99,17 +114,14 @@ def get_completion(
             for x in remove:
                 content = content.replace(x, "")
 
-        if (
-            not check_links or response_format or check_links_in_string(content)
-        ):  # if no checks or checks are passing return response
-            return content
-
-        if attempt < max_retries:
-            print(f"Attempt {attempt + 1}: Found bad URLs. Retrying with a new random seed.")
-        else:
-            print("Max retries reached. Updating prompt to exclude links.")
-            messages.append({"role": "user", "content": "Please provide a response without any URLs or links in it."})
-            check_links = False  # automatically accept the last message
+            if not check_links or check_links_in_string(content):
+                return content
+            elif attempt < max_retries:
+                print(f"Attempt {attempt + 1}: Found bad URLs. Retrying with a new random seed.")
+                continue
+            else:
+                print("Max retries reached. Returning response with potential bad links.")
+                return content
 
 
 if __name__ == "__main__":
