@@ -42,25 +42,18 @@ def get_completion(
     remove: list[str] = (" @giscus[bot]",),  # strings to remove from response
     temperature: float = 1.0,  # note GPT-5 requires temperature=1.0
     reasoning_effort: str = None,  # reasoning effort for GPT-5 models: minimal, low, medium, high
-    response_format: dict = None,  # JSON schema response format for structured outputs
+    json_schema: dict = None,  # JSON schema response format for structured outputs
 ) -> str:
     """Generates a completion using OpenAI's API based on input messages."""
     assert OPENAI_API_KEY, "OpenAI API key is required."
-
-    # Determine if using Azure OpenAI
-    if AZURE_OPENAI_ENDPOINT:
-        url = AZURE_OPENAI_ENDPOINT
-        headers = {"api-key": OPENAI_API_KEY, "Content-Type": "application/json"}
-    else:
-        url = "https://api.openai.com/v1/chat/completions"
-        headers = {"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"}
-
+    url = "https://api.openai.com/v1/chat/completions"
+    headers = {"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"}
     if messages and messages[0].get("role") == "system":
         messages[0]["content"] += "\n\n" + SYSTEM_PROMPT_ADDITION
 
     content = ""
     max_retries = 2
-    for attempt in range(max_retries + 1):  # attempt = [0, 1, 2] 2 random retries before asking for no links
+    for attempt in range(max_retries + 2):  # attempt = [0, 1, 2, 3], 2 random retries before asking for no links
         data = {
             "model": OPENAI_MODEL,
             "messages": messages,
@@ -72,56 +65,29 @@ def get_completion(
         if "gpt-5" in OPENAI_MODEL:
             data["reasoning_effort"] = reasoning_effort or "low"  # Default to low for GPT-5
 
-        # Add response_format for structured outputs
-        if response_format:
-            data["response_format"] = response_format
+        # Add JSON schema if provided
+        if json_schema:
+            data["response_format"] = {"type": "json_schema", "json_schema": json_schema}
 
         r = requests.post(url, json=data, headers=headers)
         r.raise_for_status()
         content = r.json()["choices"][0]["message"]["content"].strip()
-
-        if response_format:
-            # For JSON responses, apply remove operations per field and check links per field
-            try:
-                parsed_data = json.loads(content)
-                all_fields_pass = True
-
-                for key, value in parsed_data.items():
-                    if isinstance(value, str):
-                        for x in remove:
-                            value = value.replace(x, "")
-                            parsed_data[key] = value
-                        if check_links and not check_links_in_string(value):
-                            all_fields_pass = False
-                            break
-
-                if all_fields_pass:
-                    content = json.dumps(parsed_data)
-                    return content
-                elif attempt < max_retries:
-                    print(f"Attempt {attempt + 1}: Found bad URLs in JSON fields. Retrying with a new random seed.")
-                    continue
-                else:
-                    print("Max retries reached for JSON response. Returning response with potential bad links.")
-                    content = json.dumps(parsed_data)
-                    return content
-
-            except json.JSONDecodeError:
-                # If JSON parsing fails, treat as regular text
-                pass
-        else:
+        if not json_schema:
             content = remove_outer_codeblocks(content)
-            for x in remove:
-                content = content.replace(x, "")
 
-            if not check_links or check_links_in_string(content):
-                return content
-            elif attempt < max_retries:
-                print(f"Attempt {attempt + 1}: Found bad URLs. Retrying with a new random seed.")
-                continue
-            else:
-                print("Max retries reached. Returning response with potential bad links.")
-                return content
+        for x in remove:
+            content = content.replace(x, "")
+        if not check_links or check_links_in_string(content):  # if no checks or checks are passing return response
+            return content
+
+        if attempt < max_retries:
+            print(f"Attempt {attempt + 1}: Found bad URLs. Retrying with a new random seed.")
+        else:
+            print("Max retries reached. Updating prompt to exclude links.")
+            messages.append({"role": "user", "content": "Please provide a response without any URLs or links in it."})
+            check_links = False  # automatically accept the last message
+
+    return content
 
 
 if __name__ == "__main__":
