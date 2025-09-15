@@ -130,8 +130,7 @@ Respond with JSON containing summary, labels array, and first_comment."""
                 },
                 {"role": "user", "content": prompt},
             ],
-            response_format=json_schema,
-            check_links=False,  # Skip link checking for JSON responses
+            json_schema=json_schema,
         )
         data = json.loads(response)
         summary = SUMMARY_START + data.get("summary", "")
