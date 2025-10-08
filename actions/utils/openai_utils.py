@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import time
 
 import requests
 
@@ -13,7 +12,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5-2025-08-07")
 AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 SYSTEM_PROMPT_ADDITION = """Guidance:
-  - Ultralytics Branding: Use YOLO11, YOLO12, etc., not YOLOv11, YOLOv12 (only older versions like YOLOv10 have a v). Always capitalize "HUB" in "Ultralytics HUB"; use "Ultralytics HUB", not "The Ultralytics HUB". 
+  - Ultralytics Branding: Use YOLO11, YOLO26, etc., not YOLOv11, YOLOv26 (only older versions like YOLOv10 have a v). Always capitalize "HUB" in "Ultralytics HUB"; use "Ultralytics HUB", not "The Ultralytics HUB". 
   - Avoid Equations: Do not include equations or mathematical notations.
   - Markdown: Reply in Markdown format.
   - Links: Use descriptive anchor text for all URLs.
@@ -42,7 +41,7 @@ def get_completion(
     temperature: float = 1.0,  # note GPT-5 requires temperature=1.0
     reasoning_effort: str = None,  # reasoning effort for GPT-5 models: minimal, low, medium, high
 ) -> str:
-    """Generates a completion using OpenAI's API based on input messages."""
+    """Generates a completion using OpenAI's Responses API based on input messages."""
     assert OPENAI_API_KEY, "OpenAI API key is required."
 
     # Determine if using Azure OpenAI
@@ -50,7 +49,7 @@ def get_completion(
         url = AZURE_OPENAI_ENDPOINT
         headers = {"api-key": OPENAI_API_KEY, "Content-Type": "application/json"}
     else:
-        url = "https://api.openai.com/v1/chat/completions"
+        url = "https://api.openai.com/v1/responses"
         headers = {"Authorization": f"Bearer {OPENAI_API_KEY}", "Content-Type": "application/json"}
 
     if messages and messages[0].get("role") == "system":
@@ -59,20 +58,25 @@ def get_completion(
     content = ""
     max_retries = 2
     for attempt in range(max_retries + 2):  # attempt = [0, 1, 2, 3], 2 random retries before asking for no links
-        data = {
-            "model": OPENAI_MODEL,
-            "messages": messages,
-            "seed": int(time.time() * 1000),
-            "temperature": temperature,
-        }
+        data = {"model": OPENAI_MODEL, "input": messages, "store": False, "temperature": temperature}
 
-        # Add reasoning_effort for GPT-5 models
+        # Add reasoning for GPT-5 models
         if "gpt-5" in OPENAI_MODEL:
-            data["reasoning_effort"] = reasoning_effort or "low"  # Default to low for GPT-5
+            data["reasoning"] = {"effort": reasoning_effort or "low"}  # Default to low for GPT-5
 
         r = requests.post(url, json=data, headers=headers)
         r.raise_for_status()
-        content = r.json()["choices"][0]["message"]["content"].strip()
+        response_data = r.json()
+
+        # Extract text from output array
+        content = ""
+        for item in response_data.get("output", []):
+            if item.get("type") == "message":
+                for content_item in item.get("content", []):
+                    if content_item.get("type") == "output_text":
+                        content += content_item.get("text", "")
+
+        content = content.strip()
         content = remove_outer_codeblocks(content)
         for x in remove:
             content = content.replace(x, "")
